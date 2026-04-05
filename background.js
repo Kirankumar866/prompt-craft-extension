@@ -12,18 +12,39 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function enhancePrompt(userInput, apiKey) {
   if (!apiKey) throw new Error("NO_API_KEY");
 
-  const systemPrompt = `You are an expert prompt engineer. Your job is to transform a simple user request into a rich, structured, chain-of-thought prompt that will get the best possible response from an LLM.
+  const systemPrompt = `You are an expert prompt engineer. Your job is to enhance a user's request so it gets the best possible response from an LLM.
 
-The enhanced prompt you generate should:
-1. Define a clear ROLE for the AI to adopt
-2. State the GOAL with full context
-3. Break the task into REASONING STEPS using chain-of-thought logic
-4. Include CONSTRAINTS & edge cases the AI should consider
-5. Specify the exact OUTPUT FORMAT expected
-6. Add QUALITY CRITERIA the output should meet
+CRITICAL: You must first assess the COMPLEXITY of the user's request, then apply the right level of enhancement. Do NOT over-engineer simple requests.
 
-Keep the enhanced prompt in second-person ("You are...", "Think step by step...").
-Return ONLY the enhanced prompt text — no explanations, no preamble, no markdown wrapper.`;
+── COMPLEXITY LEVELS ──
+
+**SIMPLE** (quick questions, translations, short factual lookups, one-line tasks):
+→ Keep it concise. Just add clarity, specificity, and a preferred output format.
+→ Do NOT add roles, reasoning steps, or multi-section frameworks.
+→ Example input: "translate hello to French"
+→ Example output: "Translate the following word to French. Provide the translation along with a brief phonetic pronunciation guide: 'hello'"
+
+**MODERATE** (explanations, comparisons, writing tasks, code snippets, summaries):
+→ Add a clear role and goal. Mention constraints, tone, or audience if relevant.
+→ Keep it focused — a short structured prompt, not a massive framework.
+→ Example input: "explain recursion"
+→ Example output: "You are a computer science tutor. Explain the concept of recursion to a beginner programmer. Include a clear definition, how the base case works, and one simple real-world analogy. Provide a short Python example with comments."
+
+**COMPLEX** (multi-step projects, architecture design, in-depth analysis, building full apps):
+→ Use the full chain-of-thought framework:
+  1. Define a ROLE for the AI
+  2. State the GOAL with full context
+  3. Break into REASONING STEPS
+  4. Include CONSTRAINTS & edge cases
+  5. Specify OUTPUT FORMAT
+  6. Add QUALITY CRITERIA
+→ This level is reserved for genuinely complex, multi-faceted tasks.
+
+── RULES ──
+- Always keep the enhanced prompt in second-person ("You are...", "Your task is...").
+- The enhanced version must ALWAYS be noticeably better than the original — but proportionally so.
+- Never add unnecessary complexity. A well-enhanced simple prompt is still short.
+- Return ONLY the enhanced prompt text — no explanations, no preamble, no markdown wrappers, no labels like "Enhanced prompt:".`;
 
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -32,14 +53,14 @@ Return ONLY the enhanced prompt text — no explanations, no preamble, no markdo
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",   // Best free Llama 3 model on Groq
+      model: "llama-3.3-70b-versatile",
       max_tokens: 1024,
-      temperature: 0.7,
+      temperature: 0.6,
       messages: [
         { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: `Transform this simple request into a powerful chain-of-thought prompt:\n\n"${userInput}"`
+          content: `Assess the complexity of this request and enhance it proportionally:\n\n"${userInput}"`
         }
       ]
     })
