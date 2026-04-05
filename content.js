@@ -32,9 +32,9 @@
     claude: {
       match: () => location.hostname.includes("claude.ai"),
       getInput: () =>
-        document.querySelector("div[contenteditable='true'].ProseMirror") ||
-        document.querySelector('[data-placeholder]') ||
-        document.querySelector("div[contenteditable='true']"),
+        document.querySelector(".ProseMirror") ||
+        document.querySelector("div[contenteditable='true']") ||
+        document.querySelector('[data-placeholder]'),
       getInputValue: (el) => el.innerText,
       setInputValue: (el, val) => {
         el.focus();
@@ -42,11 +42,13 @@
         document.execCommand("insertText", false, val);
         el.dispatchEvent(new InputEvent("input", { bubbles: true }));
       },
-      getAnchor: () =>
-        document.querySelector("button[aria-label='Send Message']")?.parentElement ||
-        document.querySelector("button[aria-label='Send message']")?.parentElement ||
-        document.querySelector("fieldset")?.parentElement ||
-        document.querySelector(".flex.items-end"),
+      getAnchor: () => {
+        const sendBtn = document.querySelector("button[aria-label*='Send']") || document.querySelector("button[aria-label*='send']");
+        if (sendBtn) return sendBtn.parentElement;
+
+        const editor = document.querySelector(".ProseMirror") || document.querySelector("div[contenteditable='true']");
+        return editor ? editor.parentElement : null;
+      }
     },
     gemini: {
       match: () => location.hostname.includes("gemini.google.com"),
