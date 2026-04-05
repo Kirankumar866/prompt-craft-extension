@@ -24,6 +24,8 @@
       },
       getAnchor: () =>
         document.querySelector("button[data-testid='send-button']")?.parentElement ||
+        document.querySelector("button[aria-label='Send prompt']")?.parentElement ||
+        document.querySelector("#prompt-textarea")?.parentElement ||
         document.querySelector("form") ||
         document.querySelector(".stretch"),
     },
@@ -41,7 +43,9 @@
         el.dispatchEvent(new InputEvent("input", { bubbles: true }));
       },
       getAnchor: () =>
+        document.querySelector("button[aria-label='Send Message']")?.parentElement ||
         document.querySelector("button[aria-label='Send message']")?.parentElement ||
+        document.querySelector("fieldset")?.parentElement ||
         document.querySelector(".flex.items-end"),
     },
     gemini: {
@@ -58,6 +62,7 @@
       },
       getAnchor: () =>
         document.querySelector("button.send-button")?.parentElement ||
+        document.querySelector("button[aria-label='Send message']")?.parentElement ||
         document.querySelector(".input-area-container"),
     },
     deepseek: {
@@ -73,7 +78,8 @@
       },
       getAnchor: () =>
         document.querySelector("button[type='submit']")?.parentElement ||
-        document.querySelector(".input-container"),
+        document.querySelector(".input-container") ||
+        document.querySelector("textarea")?.parentElement,
     },
   };
 
@@ -264,9 +270,9 @@
         <div class="pc-nokey-icon">🔑</div>
         <h3>${invalid ? "Invalid API Key" : "API Key Required"}</h3>
         <p>${invalid
-          ? "Your Groq API key appears to be invalid. Please check it in the extension popup."
-          : "PromptCraft uses Groq's free Llama 3.3 70B to enhance prompts. Add your free Groq API key to get started."
-        }</p>
+        ? "Your Groq API key appears to be invalid. Please check it in the extension popup."
+        : "PromptCraft uses Groq's free Llama 3.3 70B to enhance prompts. Add your free Groq API key to get started."
+      }</p>
         <a href="https://console.groq.com/keys" target="_blank" class="pc-btn-link">Get free Groq API key →</a>
         <p class="pc-hint">Then click the ✦ extension icon in your toolbar to add it.</p>
       </div>
@@ -320,19 +326,26 @@
 
   // ─── MutationObserver to re-inject after SPA navigation ───────────────────
   let retryCount = 0;
+  let isInjecting = false;
+
   function tryInject() {
+    if (injected) return;
+    isInjecting = true;
     injectButton();
+
     if (!injected && retryCount < 20) {
       retryCount++;
       setTimeout(tryInject, 800);
+    } else {
+      isInjecting = false;
     }
   }
 
   const observer = new MutationObserver(() => {
-    if (!document.getElementById("promptcraft-btn")) {
+    if (!document.getElementById("promptcraft-btn") && !isInjecting) {
       injected = false;
       retryCount = 0;
-      tryInject();
+      setTimeout(tryInject, 200);
     }
   });
 
